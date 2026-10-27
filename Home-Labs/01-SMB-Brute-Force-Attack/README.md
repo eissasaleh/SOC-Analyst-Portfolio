@@ -21,7 +21,7 @@ This home lab simulates repeated SMB authentication failures against a Windows e
 
 - [Attack execution](Attack-Execution.md) — lab setup, commands, and simulation evidence.
 - [Investigation report](Investigation-Report.md) — Wazuh alerts, event correlation, findings, and defensive recommendations.
-- [Screenshots](Screenshots/) — annotated evidence images will be added after they are uploaded.
+- [Screenshots](Screenshots/) — five annotated images documenting execution, detection, successful authentication, share access, and file retrieval.
 
 ## Key evidence collected
 
@@ -44,6 +44,6 @@ The lab generated repeated failed network logons, followed by a successful netwo
 - Detailed file-level auditing (Event ID 5145) was not available in this run.
 - Share access and file retrieval are supported by different evidence sources and should not be presented as the same event.
 
-## Screenshot status
+## Evidence handling
 
-Screenshots are not included yet. Upload only the redacted versions, then link them from both documents. Ensure all credentials are unreadable before making images public.
+The screenshots are uploaded in the `Screenshots/` directory. Public copies should not expose credentials; the complete credential must be unreadable while relevant event fields remain legible.
