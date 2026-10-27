@@ -73,6 +73,10 @@ The `smbclient` command prompts for the account password rather than putting it 
 
 ### 5. Retrieve the test file
 
+**Figure 2 — Retrieval of Financial_Report.txt from the Finance SMB share**
+
+![SMB file retrieval output](Screenshots/02-smb-file-retrieval.jpeg)
+
 Inside the `smbclient` session, the share was listed and `Financial_Report.txt` was retrieved. The listing showed a file size of 140 bytes. The file was downloaded to Kali Linux; its contents were not opened or reviewed as part of this investigation.
 
 **Commands inside the `smbclient` session:**
@@ -86,10 +90,6 @@ quit
 - `ls` lists the files available in the share.
 - `get Financial_Report.txt` retrieves the file to the local Kali working directory.
 - `quit` exits the SMB client.
-
-**Figure 2 — Retrieval of Financial_Report.txt from the Finance SMB share**
-
-![SMB file retrieval output](Screenshots/02-smb-file-retrieval.jpeg)
 
 ## Notes
 
