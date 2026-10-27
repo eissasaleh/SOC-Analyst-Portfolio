@@ -41,30 +41,6 @@ nc -zv 192.168.29.72 445
 
 The test list contained ten invalid password entries followed by the valid lab credential. The list was saved to `/tmp/smb-password11`.
 
-**Command used to create the list:**
-
-```bash
-nano /tmp/smb-password11
-```
-
-The file contained ten invalid test entries followed by the valid lab credential. For this public example, the entries are represented by placeholders and the valid credential is masked:
-
-```text
-<invalid test entry 1>
-<invalid test entry 2>
-<invalid test entry 3>
-<invalid test entry 4>
-<invalid test entry 5>
-<invalid test entry 6>
-<invalid test entry 7>
-<invalid test entry 8>
-<invalid test entry 9>
-<invalid test entry 10>
-ei***
-```
-
-The placeholders above illustrate the list structure; they are not the original password values.
-
 ### 3. Test SMB authentication
 
 CrackMapExec submitted the prepared list to the SMB service. The output showed ten `STATUS_LOGON_FAILURE` results followed by successful authentication.
