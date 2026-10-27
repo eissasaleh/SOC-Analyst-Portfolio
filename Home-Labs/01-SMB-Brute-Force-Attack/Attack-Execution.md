@@ -46,10 +46,12 @@ The share listing showed `Financial_Report.txt` (140 bytes). The `smbclient get`
 
 ## Evidence screenshots
 
-The screenshots below will be added to the `Screenshots/` directory after upload. Review the public copies to ensure no credential is readable.
+The redacted, annotated screenshots are available in the `Screenshots/` directory:
 
 1. [01 — SMB brute-force execution](Screenshots/01-smb-brute-force-execution.png)
 2. [02 — SMB file retrieval](Screenshots/02-smb-file-retrieval.jpeg)
+
+Before publishing or replacing evidence images, verify that no credential is readable.
 
 ## Operational notes
 
