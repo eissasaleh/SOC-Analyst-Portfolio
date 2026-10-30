@@ -1,10 +1,10 @@
 # Investigation Report — SMB Brute-Force and Finance Share Access
 
-## Executive summary
+## Executive Summary
 
-On 20 October 2026, I ran a controlled home-lab simulation from Kali Linux (`192.168.29.163`) against a Windows 10 endpoint (`192.168.29.72`). The simulation generated repeated failed SMB authentication attempts. Wazuh raised a multiple-logon-failures alert. The same source IP and lab account were then seen in a successful network logon event, followed by a Windows event recording access to the Finance SMB share.
+This investigation covers a controlled home-lab simulation conducted on 20 October 2026. Kali Linux (`192.168.29.163`) was used to simulate repeated SMB authentication failures against a Windows 10 endpoint (`192.168.29.72`).
 
-The evidence supports a sequence of failed authentication, successful network authentication, and share access during the lab run. The successful-logon rule mentions possible Pass-the-Hash activity, but the available event does not confirm that technique. Event ID 5140 records share access, not a file-specific download. The Kali `smbclient` output separately shows that I retrieved `Financial_Report.txt`. I did not open or review the file contents during this investigation.
+Wazuh generated an alert for multiple Windows logon failures. A successful network logon for the same lab account and source IP was then recorded, followed by Windows Event ID 5140, which recorded access to the Finance SMB share.
 
 ## Scope and environment
 
@@ -23,68 +23,77 @@ The evidence supports a sequence of failed authentication, successful network au
 
 ## Timeline
 
-The raw Windows `systemTime` fields are recorded in UTC. The Wazuh dashboard timestamps below are the displayed local times (UTC+05:30). These can differ because the dashboard timestamp and the original Windows event time are not necessarily the same timestamp. The Windows event time is used to describe the event sequence.
+The following timeline shows the events recorded in Wazuh during the SMB lab simulation on 20 October 2026.
 
-| Windows event time (UTC) | Wazuh dashboard timestamp (local) | Evidence | Interpretation |
-|---|---|---|---|
-| 2026-10-20 14:08:04.762Z | 19:38:06.156 | Event ID 4625; Wazuh Rule 60204, level 10 | Multiple Windows logon failures. The captured failure has substatus `0xC000006A`, indicating an incorrect password. |
-| 2026-10-20 14:08:05.153Z | 19:38:06.218 | Event ID 4624; Wazuh Rule 92652, level 6 | Successful network logon for `SOC-LabUser` from `192.168.29.163`; logon type 3 and NTLM V2. |
-| 2026-10-20 14:09:36.133Z | 19:39:37.659 | Event ID 5140; Wazuh Rule 67017, level 3 | Network share access. The record identifies the Finance SMB share, account `SOC-LabUser`, and source `192.168.29.163`. |
-
-Based on the raw Windows event times, the successful logon occurred about 0.391 seconds after the failed-logon event shown above. The share-access event occurred about 90.980 seconds after the successful logon. The matching account and source IP support correlation, while the Kali terminal output provides separate evidence for the file retrieval.
+| Wazuh Dashboard Timestamp (Local) | Evidence | Description |
+|---|---|---|
+| 19:38:06.156 | Event ID 4625 — Rule 60204, Level 10 | Multiple failed Windows logon attempts against `SOC-LabUser`. |
+| 19:38:06.218 | Event ID 4624 — Rule 92652, Level 6 | Successful network logon for `SOC-LabUser` from `192.168.29.163` using NTLM V2. |
+| 19:39:37.659 | Event ID 5140 — Rule 67017, Level 3 | Access to the Finance SMB share by `SOC-LabUser` from `192.168.29.163`. |
 
 ## Detection 1 — Multiple Windows logon failures
 
 - **Windows event:** Event ID 4625
 - **Wazuh rule:** 60204 — `Multiple Windows Logon Failures`
 - **Wazuh level:** 10
+- **Dashboard timestamp:** 20 Oct 2026, 19:38:06.156 (local time)
 - **MITRE ATT&CK:** T1110 — Brute Force
 - **Source IP:** `192.168.29.163`
 - **Target account:** `SOC-LabUser`
 - **Target endpoint:** `WIN10-SOC-LAB` / `192.168.29.72`
 - **Failure details:** status `0xC000006D`, substatus `0xC000006A` (incorrect password)
 
-Wazuh grouped repeated Windows authentication failures into an alert. This is consistent with the controlled password-testing activity shown in my Kali terminal.
+Wazuh grouped repeated Windows authentication failures into an alert. This is consistent with the controlled password-testing activity shown in the Kali terminal.
 
-Evidence: [03 — SMB brute-force detection](Screenshots/03-smb-brute-force-detection.png)
+**Figure 1 — Wazuh detection of multiple Windows logon failures**
+
+![SMB brute-force detection](Screenshots/03-smb-brute-force-detection.png)
 
 ## Detection 2 — Successful network logon
 
 - **Windows event:** Event ID 4624
 - **Wazuh rule:** 92652
 - **Wazuh level:** 6
+- **Dashboard timestamp:** 20 Oct 2026, 19:38:06.218 (local time)
 - **Account:** `SOC-LabUser`
 - **Source IP:** `192.168.29.163`
 - **Target endpoint:** `WIN10-SOC-LAB` / `192.168.29.72`
 - **Logon type:** 3 (network)
 - **Authentication package:** NTLM V2
-- **Windows event time:** 20 Oct 2026, 14:08:05.153 UTC
-- **Wazuh dashboard timestamp:** 20 Oct 2026, 19:38:06.218 (UTC+05:30)
 
-The successful event followed the failed logon in the raw Windows event time. The matching account and source IP make this a useful correlation. Logon type 3 is a network logon and should not be described as an RDP logon.
+The successful event followed the failed logon. The matching account and source IP make this a useful correlation. Logon type 3 is a network logon and should not be described as an RDP logon.
 
-The Wazuh rule description mentions possible Pass-the-Hash activity, but the available event fields do not prove Pass-the-Hash. I treated this as an alert suggestion, not a confirmed finding.
+The Wazuh rule description mentions possible Pass-the-Hash activity, but the available event fields do not prove Pass-the-Hash. This alert description should be treated as a lead for further investigation, not a confirmed finding.
 
-Evidence: [04 — SMB successful network logon](Screenshots/04-smb-successful-network-logon.png)
+**Figure 2 — Successful Windows network logon**
+
+![SMB successful network logon](Screenshots/04-smb-successful-network-logon.png)
 
 ## Detection 3 — Finance SMB share access
 
 - **Windows event:** Event ID 5140
 - **Wazuh rule:** 67017 — `A network share was accessed.`
 - **Wazuh level:** 3
+- **Dashboard timestamp:** 20 Oct 2026, 19:39:37.659 (local time)
 - **SMB share:** `Finance` (`\\*\Finance`)
 - **Local Windows directory behind the share:** `C:\Finance`
 - **Account:** `SOC-LabUser`
 - **Source IP:** `192.168.29.163`
-- **Windows event time:** 20 Oct 2026, 14:09:36.133 UTC
-- **Wazuh dashboard timestamp:** 20 Oct 2026, 19:39:37.659 (UTC+05:30)
 - **MITRE mapping shown by Wazuh:** T1021.002
 
-Event ID 5140 records access to a network share. It is not file-specific and does not prove that a particular file was read or downloaded. Wazuh maps this event to T1021.002 (SMB/Windows Admin Shares), but the event shown here identifies the `Finance` share; the mapping alone does not establish that an administrative share was accessed.
+Event ID 5140 records access to a network share. It is not file-specific and does not prove that a particular file was read or downloaded. Wazuh maps this event to T1021.002 (SMB/Windows Admin Shares), but the event identifies the `Finance` share; the mapping alone does not establish that an administrative share was accessed.
 
-The Kali terminal output separately shows that I retrieved `Financial_Report.txt` from the Finance SMB share. I did not open or review its contents.
+**Figure 3 — Windows event recording access to the Finance SMB share**
 
-Evidence: [05 — SMB Finance share access](Screenshots/05-smb-finance-share-access.png)
+![Finance SMB share access](Screenshots/05-smb-finance-share-access.png)
+
+## File retrieval evidence
+
+The Kali `smbclient` output showed that `Financial_Report.txt` (140 bytes) was successfully retrieved from the Finance SMB share. The file was downloaded to Kali Linux; its contents were not opened or reviewed during this investigation.
+
+**Figure 4 — Retrieval of Financial_Report.txt from the Finance SMB share**
+
+![SMB file retrieval output](Screenshots/02-smb-file-retrieval.jpeg)
 
 ## Key findings
 
@@ -93,15 +102,11 @@ Evidence: [05 — SMB Finance share access](Screenshots/05-smb-finance-share-acc
 3. Windows Event ID 5140 recorded subsequent access to the Finance SMB share.
 4. The Kali `smbclient` output showed retrieval of `Financial_Report.txt`; the file contents were not reviewed.
 
-## Investigation disposition
-
-This was an authorized home-lab simulation, not a production incident. The observed activity was consistent with the actions I performed in the lab. No production containment or remediation was performed.
-
 ## Limitations
 
 - The successful-logon alert mentions possible Pass-the-Hash activity, but the available evidence does not confirm it.
-- Windows Event ID 5145 was not available in the collected telemetry, so I could not use it to examine detailed file-share access requests.
-- Windows Event ID 5140 confirmed access to the Finance SMB share. The Kali terminal output separately confirmed the download of `Financial_Report.txt`. I did not review the file contents during this investigation.
+- Windows Event ID 5145 was not available in the collected telemetry, so detailed file-share access requests could not be examined using that event.
+- Windows Event ID 5140 confirmed access to the Finance SMB share. The Kali terminal output separately confirmed the download of `Financial_Report.txt`. The file contents were not reviewed during this investigation.
 - The report covers the events and evidence collected for this simulation; it does not claim that every possible post-authentication activity was investigated.
 
 ## Recommendations
@@ -112,11 +117,3 @@ This was an authorized home-lab simulation, not a production incident. The obser
 4. Apply least privilege to SMB share and NTFS permissions; review who can read sensitive shares.
 5. Monitor for unexpected SMB access, account changes, and suspicious follow-on process activity.
 6. Do not expose passwords or other credentials in public screenshots or reports.
-
-## Evidence screenshots
-
-- [01 — SMB brute-force execution](Screenshots/01-smb-brute-force-execution.png)
-- [02 — SMB file retrieval](Screenshots/02-smb-file-retrieval.jpeg)
-- [03 — SMB brute-force detection](Screenshots/03-smb-brute-force-detection.png)
-- [04 — SMB successful network logon](Screenshots/04-smb-successful-network-logon.png)
-- [05 — SMB Finance share access](Screenshots/05-smb-finance-share-access.png)
