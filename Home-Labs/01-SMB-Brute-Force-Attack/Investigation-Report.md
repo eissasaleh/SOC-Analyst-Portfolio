@@ -93,7 +93,7 @@ The Kali `smbclient` output showed that `Financial_Report.txt` (140 bytes) was s
 
 **Figure 4 — Retrieval of Financial_Report.txt from the Finance SMB share**
 
-![SMB file retrieval output](Screenshots/02-smb-file-retrieval.jpeg)
+[View screenshot evidence](Screenshots/02-smb-file-retrieval.jpeg)
 
 ## Key findings
 
