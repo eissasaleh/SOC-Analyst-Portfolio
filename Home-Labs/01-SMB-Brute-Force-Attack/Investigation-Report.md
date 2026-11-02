@@ -102,6 +102,10 @@ The Kali `smbclient` output showed that `Financial_Report.txt` (140 bytes) was s
 3. Windows Event ID 5140 recorded subsequent access to the Finance SMB share.
 4. The Kali `smbclient` output showed retrieval of `Financial_Report.txt`; the file contents were not reviewed.
 
+## Analysis and Conclusion
+
+The investigation is classified as a **True Positive**. Repeated failed logons were followed by successful network authentication and access to the Finance SMB share. The Kali terminal output also confirmed retrieval of the test file.
+
 ## Containment and Response Recommendations
 
 1. Block the attacker's source IP at the firewall.
