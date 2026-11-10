@@ -22,6 +22,8 @@ Mailpit was used to keep the email inside the lab. Nothing was sent to a real ex
 | Registry location | HKCU\Software\Microsoft\Windows\CurrentVersion\Run |
 | MITRE ATT&CK | T1566.001 — Spearphishing Attachment; T1547.001 — Registry Run Keys / Startup Folder |
 
+> **Note:** The IP addresses, hostnames and usernames shown in this guide belong to my lab environment. Replace them with the corresponding values from your own environment before executing the commands. Do not copy these values directly.
+
 ## Execution steps
 
 ### 1. Start Mailpit on Kali Linux
